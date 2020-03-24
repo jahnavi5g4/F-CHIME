@@ -1,0 +1,27 @@
+path = '/home/pi/DataSet'
+recognizer = cv2.face.LBPHFaceRecognizer_create()
+detector = cv2.CascadeClassifier("haarcascade_frontalface_default.xml");
+def prepare_training_data(data_folder_path):
+    #------STEP-1--------\n",
+    #get the directories (one directory for each subject) in data folder\n",
+    path=data_folder_path
+    imagePaths = [os.path.join(path,f) for f in os.listdir(path)]    
+    faceSamples=[]
+    ids = []
+    for imagePath in imagePaths:
+        PIL_img = Image.open(imagePath).convert('L') # grayscale
+        img_numpy = np.array(PIL_img,'uint8')
+        id = int(os.path.split(imagePath)[-1].split(".")[1])
+        faces = detector.detectMultiScale(img_numpy)
+        for (x,y,w,h) in faces:
+            faceSamples.append(img_numpy[y:y+h,x:x+w])
+            ids.append(id)
+    return faceSamples,ids
+print ("\n [INFO] Training faces. It will take a few seconds. Wait ...")
+#path="/home/pi/DataSet"
+faces,ids = prepare_training_data(path)
+recognizer.train(faces, np.array(ids))
+# Save the model into trainer/trainer.yml
+recognizer.write('/home/pi/Train/trainer.yml')
+# Print the numer of faces trained and end program
+print("\n [INFO] {0} faces trained. Exiting Program".format(len(np.unique(ids))))
